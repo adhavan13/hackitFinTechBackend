@@ -3,7 +3,10 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 // Initialize Gemini Model
-const genAI = new GoogleGenerativeAI.GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI.GoogleGenerativeAI(
+  "AIzaSyDZfr6AX8-t-auEfUOjRMQFX6e7euyjCi0"
+);
+
 
 async function getDetectorText(query) {
   const prompt = `
@@ -63,13 +66,13 @@ async function getDetectorText(query) {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
     const response = await model.generateContent(prompt);
-    
+
     // Extract the response correctly
-    const resultText = response?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    
-    return resultText || "Error: No response from AI";
+    const resultText = response.response.candidates[0].content.parts[0].text
+
+    return resultText;
   } catch (error) {
-    console.error("Error generating response:", error);
+    console.error("Error details:", error.message, error.stack);
     return "Error: Unable to fetch AI response";
   }
 }
@@ -80,7 +83,7 @@ const textChecker = async (req, res) => {
     if (!text) {
       return res.status(400).json({ message: "Text input is required" });
     }
-    
+
     const response = await getDetectorText(text);
     res.json({ response });
   } catch (error) {
