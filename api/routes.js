@@ -4,7 +4,7 @@ const router = express.Router();
 
 // Test route
 router.get("/home", (req, res) => {
-  res.send("HELLO")
+  res.send("HELLO");
 });
 
 router.post("/scamDetectorText", textChecker);
