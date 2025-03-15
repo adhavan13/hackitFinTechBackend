@@ -4,7 +4,7 @@ const router = express.Router();
 
 // Test route
 router.get("/home", (req, res) => {
-  res.json({ message: "Welcome to the API!" });
+  res.send("HELLO")
 });
 
 router.post("/scamDetectorText", textChecker);
