@@ -79,12 +79,12 @@ async function getDetectorText(query) {
 
 const textChecker = async (req, res) => {
   try {
-    const { text } = req.body;
-    if (!text) {
+    const { prompt } = req.body;
+    if (!prompt) {
       return res.status(400).json({ message: "Text input is required" });
     }
 
-    const response = await getDetectorText(text);
+    const response = await getDetectorText(prompt);
     res.json({ response });
   } catch (error) {
     console.error("Server error:", error);
