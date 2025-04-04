@@ -1,9 +1,11 @@
 const express = require("express");
 const cors = require("cors");
 const router = require("./routes"); // Adjust path based on your structure
+const connectDB = require("./config/db"); // Adjust path based on your structure
 
 const app = express();
 
+connectDB() //connect to db
 // Middleware
 app.use(cors());
 app.use(express.json());

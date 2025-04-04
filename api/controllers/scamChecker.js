@@ -4,9 +4,8 @@ dotenv.config();
 
 // Initialize Gemini Model
 const genAI = new GoogleGenerativeAI.GoogleGenerativeAI(
-  "AIzaSyDZfr6AX8-t-auEfUOjRMQFX6e7euyjCi0"
+  "AIzaSyD9S5iZ8PCCQKyJyMDb1LjWINDRqjc2CrQ"
 );
-
 
 async function getDetectorText(query) {
   const prompt = `
@@ -68,7 +67,7 @@ async function getDetectorText(query) {
     const response = await model.generateContent(prompt);
 
     // Extract the response correctly
-    const resultText = response.response.candidates[0].content.parts[0].text
+    const resultText = response.response.candidates[0].content.parts[0].text;
 
     return resultText;
   } catch (error) {
