@@ -68,7 +68,7 @@ User input:
 
 ${query}
 `;
-
+  console.log("Prompt:", query);
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
     const response = await model.generateContent(prompt);
@@ -85,10 +85,13 @@ ${query}
 
 const fundAnalyzer = async (req, res) => {
   try {
-    const { prompt } = req.body;
-    if (!prompt) {
-      return res.status(400).json({ message: "Text input is required" });
-    }
+    const { asset_type, asset_name, forecast_years } = req.body;
+
+    // if (!prompt) {
+    //   return res.status(400).json({ message: "Text input is required" });
+    // }
+
+    const prompt = `I am goind to invest in ${asset_type} ${asset_name} for ${forecast_years} years. Can you analyze the risk and potential gains?`;
 
     const response = await getDetectorText(prompt);
     res.json({ response });
