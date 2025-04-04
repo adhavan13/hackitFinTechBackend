@@ -4,7 +4,7 @@ dotenv.config();
 
 // Initialize Gemini Model
 const genAI = new GoogleGenerativeAI.GoogleGenerativeAI(
-  "AIzaSyD9S5iZ8PCCQKyJyMDb1LjWINDRqjc2CrQ"
+  "AIzaSyBU4zBok2TpiniErSwtKBDevJP7FW5Epi0"
 );
 
 async function getDetectorText(query) {
