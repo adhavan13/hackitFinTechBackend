@@ -6,15 +6,17 @@ const CHAT_ID = "6447906435";
 
 const getMessage = async (req, res) => {
   try {
-    const { alert } = req.body;
+    console.log("Received request:", req.body); // Log the incoming request body
+    const { alert, name } = req.body;
     if (!alert) {
       return res.status(400).json({ message: "Alert is required" });
     }
+    let message = `Alert: ${name}\n${alert}`;
     const response = await axios.post(
       `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
       {
         chat_id: CHAT_ID,
-        text: alert,
+        text: message,
       }
     );
     res.json({ message: "Message sent successfully" });
