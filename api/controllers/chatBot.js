@@ -4,10 +4,16 @@ const priviousMessageSchema = require("../model/chatBot");
 const ChathistorySchema = require("../model/chatHistory");
 dotenv.config();
 
-// Initialize Gemini Model
-const genAI = new GoogleGenerativeAI.GoogleGenerativeAI(
-  "AIzaSyCuNPUVNfguLkW16jIgvQ8ez-sfGpVB2C4"
-);
+// Initialize Gemini Model with environment variable
+const API_KEY =
+  process.env.GEMINI_API_KEY || "AIzaSyCJ7PuwxKU0bMXAqu1RvaVOE8zgH_81gPc";
+
+if (!API_KEY) {
+  console.error("Error: GEMINI_API_KEY not found in environment variables");
+  process.exit(1);
+}
+
+const genAI = new GoogleGenerativeAI.GoogleGenerativeAI(API_KEY);
 
 async function getPreviousMessage() {
   try {
@@ -56,20 +62,52 @@ async function combineMessages(messages) {
     Based on both the history and the current query, provide a well-formed and context-aware response.`;
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const response = await model.generateContent(queryToCombine);
-    const resultText = response.response.candidates[0].content.parts[0].text;
+
+    // Improved response parsing with better error handling
+    if (!response || !response.response) {
+      throw new Error("Invalid response structure from Gemini API");
+    }
+
+    let resultText;
+
+    // Try different response structures
+    if (response.response.text) {
+      resultText = response.response.text();
+    } else if (response.response.candidates && response.response.candidates[0]) {
+      const candidate = response.response.candidates[0];
+      if (candidate.content && candidate.content.parts && candidate.content.parts[0]) {
+        resultText = candidate.content.parts[0].text;
+      } else {
+        throw new Error("Unexpected response format from Gemini API");
+      }
+    } else {
+      throw new Error("No valid response content found");
+    }
 
     return resultText;
   } catch (error) {
-    console.error("Error details:", error.message, error.stack);
-    return "Error: Unable to fetch AI response";
+    console.error("Gemini API Error:", {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data || "No response data",
+    });
+
+    // Return a more specific error message
+    if (error.message.includes("API key")) {
+      return "Error: Invalid API key. Please check your Gemini API key.";
+    } else if (error.message.includes("quota")) {
+      return "Error: API quota exceeded. Please try again later.";
+    } else {
+      return `Error: Unable to fetch AI response - ${error.message}`;
+    }
   }
 }
 
 async function getResponseText(query) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     // Extract the response correctly
     const final_query = await combineMessages(query);
@@ -89,7 +127,7 @@ async function getResponseText(query) {
     User: What is a mutual fund?
     Chatbot: A mutual fund is a pool of money collected from investors to invest in stocks, bonds, or other assets, managed by a professional.
     
-    User: What’s the capital of France?
+    User: What's the capital of France?
     Chatbot: The capital of France is Paris.
     
     User: Should I invest in stocks or real estate?
@@ -103,15 +141,47 @@ async function getResponseText(query) {
     User${final_query}
     `;
     const finalResponse = await model.generateContent(main_query);
-    const finalText =
-      finalResponse.response.candidates[0].content.parts[0].text;
+
+    // Improved response parsing with better error handling
+    if (!finalResponse || !finalResponse.response) {
+      throw new Error("Invalid response structure from Gemini API");
+    }
+
+    let finalText;
+
+    // Try different response structures
+    if (finalResponse.response.text) {
+      finalText = finalResponse.response.text();
+    } else if (finalResponse.response.candidates && finalResponse.response.candidates[0]) {
+      const candidate = finalResponse.response.candidates[0];
+      if (candidate.content && candidate.content.parts && candidate.content.parts[0]) {
+        finalText = candidate.content.parts[0].text;
+      } else {
+        throw new Error("Unexpected response format from Gemini API");
+      }
+    } else {
+      throw new Error("No valid response content found");
+    }
+
     // await saveMessage(query, finalText); // Save the user query and AI response to the database
     await saveMessage(finalText);
     await saveChatHistory(final_query, finalText); // Save the chat history to the database
     return finalText;
   } catch (error) {
-    console.error("Error details:", error.message, error.stack);
-    return "Error: Unable to fetch AI response";
+    console.error("Gemini API Error:", {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data || "No response data",
+    });
+
+    // Return a more specific error message
+    if (error.message.includes("API key")) {
+      return "Error: Invalid API key. Please check your Gemini API key.";
+    } else if (error.message.includes("quota")) {
+      return "Error: API quota exceeded. Please try again later.";
+    } else {
+      return `Error: Unable to fetch AI response - ${error.message}`;
+    }
   }
 }
 
