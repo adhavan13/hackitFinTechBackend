@@ -2,10 +2,16 @@ const GoogleGenerativeAI = require("@google/generative-ai");
 const dotenv = require("dotenv");
 dotenv.config();
 
-// Initialize Gemini Model
-const genAI = new GoogleGenerativeAI.GoogleGenerativeAI(
-  "AIzaSyCuNPUVNfguLkW16jIgvQ8ez-sfGpVB2C4"
-);
+// Initialize Gemini Model with environment variable
+const API_KEY =
+  process.env.GEMINI_API_KEY || "AIzaSyCJ7PuwxKU0bMXAqu1RvaVOE8zgH_81gPc";
+
+if (!API_KEY) {
+  console.error("Error: GEMINI_API_KEY not found in environment variables");
+  process.exit(1);
+}
+
+const genAI = new GoogleGenerativeAI.GoogleGenerativeAI(API_KEY);
 
 async function getDetectorText(query) {
   const prompt = `
@@ -20,12 +26,12 @@ async function getDetectorText(query) {
        - Summarize the investment offer concisely while retaining key details.  
     
     3. **Benefit Extraction (If Legitimate):**  
-       - If it’s a good investment, highlight its benefits like security, growth potential, and credibility.  
+       - If it's a good investment, highlight its benefits like security, growth potential, and credibility.  
     
     ### Output Format:
     - **Category:** ["Scam Alert" / "Legitimate Investment"]  
     - **Summary:** [Shortened version of the offer]  
-    - **Analysis:** [Why it's a scam or why it’s a good investment]  
+    - **Analysis:** [Why it's a scam or why it's a good investment]  
     - **Benefits (If Legitimate):** [List benefits]  
     
     ### Example Inputs & Outputs:  
@@ -63,16 +69,50 @@ async function getDetectorText(query) {
   `;
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const response = await model.generateContent(prompt);
 
-    // Extract the response correctly
-    const resultText = response.response.candidates[0].content.parts[0].text;
+    // Improved response parsing with better error handling
+    if (!response || !response.response) {
+      throw new Error("Invalid response structure from Gemini API");
+    }
+
+    let resultText;
+
+    // Try different response structures
+    if (response.response.text) {
+      resultText = response.response.text();
+    } else if (response.response.candidates && response.response.candidates[0]) {
+      const candidate = response.response.candidates[0];
+      if (
+        candidate.content &&
+        candidate.content.parts &&
+        candidate.content.parts[0]
+      ) {
+        resultText = candidate.content.parts[0].text;
+      } else {
+        throw new Error("Unexpected response format from Gemini API");
+      }
+    } else {
+      throw new Error("No valid response content found");
+    }
 
     return resultText;
   } catch (error) {
-    console.error("Error details:", error.message, error.stack);
-    return "Error: Unable to fetch AI response";
+    console.error("Gemini API Error:", {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data || "No response data",
+    });
+
+    // Return a more specific error message
+    if (error.message.includes("API key")) {
+      return "Error: Invalid API key. Please check your Gemini API key.";
+    } else if (error.message.includes("quota")) {
+      return "Error: API quota exceeded. Please try again later.";
+    } else {
+      return `Error: Unable to fetch AI response - ${error.message}`;
+    }
   }
 }
 
